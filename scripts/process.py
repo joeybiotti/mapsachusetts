@@ -51,9 +51,7 @@ def process_geojson_to_parquet():
         FROM rail_trails;
         """).fetchone()
 
-    logger.info(
-        f'Success! Processed {summary[0]} segments, totaling {summary[1]} km of trails. '
-    )
+    logger.info(f'Success! Processed {summary[0]} segments, totaling {summary[1]} km of trails. ')
 
 
 if __name__ == '__main__':
