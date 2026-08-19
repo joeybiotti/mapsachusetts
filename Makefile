@@ -41,3 +41,6 @@ clean:
 	rm -rf __pycache__ */__pycache__ .pytest_cache .ruff_cache
 	rm -rf logs/*.log
 	@echo "✓ Cleaned cache and log artifacts."
+
+test: 
+	pytest -v
