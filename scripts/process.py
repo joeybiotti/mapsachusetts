@@ -1,5 +1,8 @@
 from pathlib import Path
 import duckdb 
+from scripts.logger import get_logger
+
+logger = get_logger('process')
 
 RAW_FILE = Path('data/raw/rail_trails.geojson')
 PROCESSED_DIR = Path('data/processed')
@@ -8,7 +11,7 @@ PROCESSED_PARQUET = PROCESSED_DIR / 'rail_trails.parquet'
 def process_geojson_to_parquet():
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     
-    print(f'Loading {RAW_FILE} into DuckDB...')
+    logger.info(f'Loading {RAW_FILE} into DuckDB...')
     
     # Initialize DuckDB
     conn = duckdb.connect()
@@ -32,7 +35,7 @@ def process_geojson_to_parquet():
     conn.execute(query)
     
     # Export directly to compressed Parquet format
-    print(f'Exporting to GeoParquet: {PROCESSED_PARQUET}')
+    logger.info(f'Exporting to GeoParquet: {PROCESSED_PARQUET}')
     conn.execute(f"""
                  COPY rail_trails TO '{PROCESSED_PARQUET}' (FORMAT PARQUET);
     """)
@@ -45,7 +48,7 @@ def process_geojson_to_parquet():
         FROM rail_trails;
         """).fetchone()
     
-    print(f'Success! Processed {summary[0]} segments, totaling {summary[1]} km of trails. ')
+    logger.info(f'Success! Processed {summary[0]} segments, totaling {summary[1]} km of trails. ')
     
 if __name__ == '__main__':
     process_geojson_to_parquet()

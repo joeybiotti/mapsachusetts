@@ -1,12 +1,15 @@
 from pathlib import Path
 import osmnx as ox
+from scripts.logger import get_logger
+
+logger = get_logger('process')
 
 RAW_DIR = Path('data/raw')
 RAW_DIR.mkdir(parents=True, exist_ok=True)
 
 def fetch_local_rail_trails():
     """ Fetches paved bike paths and multi-use rail trails across Middlesex/Metrowest directly from OpenStreetMap via osmnx. """
-    print('Fetching local rail trails via OpenStreetMap...')
+    logger.info('Fetching local rail trails via OpenStreetMap...')
     
     places = [
         'Acton, Massachusetts, USA',
@@ -36,7 +39,7 @@ def fetch_local_rail_trails():
     gdf.to_file(output_file, driver='GeoJSON')
     
     size_mb = output_file.stat().st_size / (1024 * 1024)
-    print(f'File saved. Saved {len(gdf)} segments to {output_file} {size_mb:.2f} MB.')
+    logger.info(f'File saved. Saved {len(gdf)} segments to {output_file} {size_mb:.2f} MB.')
     
 if __name__ == '__main__':
     fetch_local_rail_trails()
