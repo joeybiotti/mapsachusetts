@@ -35,3 +35,5 @@ Thumbs.db
 
 logs/
 *.log
+
+.ruff_cache/
