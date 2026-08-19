@@ -32,3 +32,6 @@ data/processed/*
 Thumbs.db
 .vscode/
 .idea/
+
+logs/
+*.log

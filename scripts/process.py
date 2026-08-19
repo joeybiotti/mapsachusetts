@@ -1,6 +1,6 @@
 from pathlib import Path
 import duckdb 
-from logger import get_logger
+from scripts.logger import get_logger
 
 logger = get_logger('process')
 
