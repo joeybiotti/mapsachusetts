@@ -1,58 +1,38 @@
 from pathlib import Path
-
 import duckdb
-
+import geopandas as gpd
 from scripts.logger import get_logger
 
 logger = get_logger('process')
 
-RAW_FILE = Path('data/raw/rail_trails.geojson')
-PROCESSED_DIR = Path('data/processed')
-PROCESSED_PARQUET = PROCESSED_DIR / 'rail_trails.parquet'
+BASE_DIR = Path(__file__).parent.parent.resolve() if '__file__' in globals() else Path('.').resolve()
+PROCESSED_DIR = BASE_DIR / 'data'/ 'processed'
+DB_PATH = BASE_DIR / 'mapsachusetts.db'
 
-
-def process_geojson_to_parquet():
-    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-
-    logger.info(f'Loading {RAW_FILE} into DuckDB...')
-
-    # Initialize DuckDB
-    conn = duckdb.connect()
-
-    # Load spatial extention
+def process_data():
+    parquet_path = PROCESSED_DIR / 'trails.parquet'
+    logger.info(f'Saved processed Parquet to {parquet_path}.')
+    
+    load_to_duckdb(parquet_path, table_name ='trails')
+    
+def load_to_duckdb(paquet_file: Path, table_name: str):
+    """Loads a processed GeoParquet file into mapsachusetts.db"""
+    logger.info(f'Updating table {table_name} in {DB_PATH}...')
+    
+    conn = duckdb.connect(str(DB_PATH))
+    
     conn.execute('INSTALL spatial; LOAD spatial;')
-
-    # Ingest, clean attributes, and compute path lengths
-    query = f"""
-    CREATE TABLE rail_trails AS
-        SELECT
-            COALESCE(name, 'Unnamed Trail/Path') AS trail_name,
-            COALESCE(surface, 'unknown') AS surface_type,
-            COALESCE(smoothness, 'unknown') AS smoothness,
-            -- Calculate segment length in meters directly in SQL
-            ROUND(ST_Length(geom), 2) AS length_meters,
-            geom
-        FROM ST_Read('{RAW_FILE}')
-        WHERE geom IS NOT NULL;
-    """
-    conn.execute(query)
-
-    # Export directly to compressed Parquet format
-    logger.info(f'Exporting to GeoParquet: {PROCESSED_PARQUET}')
+    
+    # Overwrite or create the table directly from Parquet output
     conn.execute(f"""
-                 COPY rail_trails TO '{PROCESSED_PARQUET}' (FORMAT PARQUET);
+                 CREATE OR REPLACE TABLE {table_name} AS
+                 SELECT * FROM read_parquet('{paquet_file}')
     """)
-
-    # Verification printout
-    summary = conn.execute("""
-        SELECT 
-            COUNT(*) AS total_segments,
-            ROUND(SUM(length_meters) / 1000.0, 2) AS total_km
-        FROM rail_trails;
-        """).fetchone()
-
-    logger.info(f'Success! Processed {summary[0]} segments, totaling {summary[1]} km of trails. ')
-
-
+    
+    count = conn.execute(f'SELECT COUNT(*) FROM {table_name}').fetchone()[0]
+    conn.close()
+    
+    logger.info(f'Successfully loaded {count} rows into "{table_name}".')
+    
 if __name__ == '__main__':
-    process_geojson_to_parquet()
+    process_data()
