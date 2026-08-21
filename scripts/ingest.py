@@ -1,49 +1,64 @@
 from pathlib import Path
-
-import osmnx as ox
-
+import osmnx as ox 
+import geopandas as gdp
 from scripts.logger import get_logger
 
-logger = get_logger('process')
+logger = get_logger('ingest')
 
-RAW_DIR = Path('data/raw')
-RAW_DIR.mkdir(parents=True, exist_ok=True)
+PROJECT_ROOT = Path(__file__).parent.parent.resolve() if '__file__' in globals() else Path('.').resolve()
+RAW_DIR = PROJECT_ROOT / 'data'/'raw'
 
-
-def fetch_local_rail_trails():
-    """Fetches paved bike paths and multi-use rail trails across Middlesex/Metrowest directly from OpenStreetMap via osmnx."""
-    logger.info('Fetching local rail trails via OpenStreetMap...')
-
-    places = [
-        'Acton, Massachusetts, USA',
-        'Concord, Massachusetts, USA',
-        'Hudson, Massachusetts, USA',
-        'Maynard, Massachusetts, USA',
+def fetch_mass_trails():
+    """Fetches statewide general trails (hiking, running, footpaths) across Massachusetts from OpenStreetMap via osmnx."""
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    logger.info('Fetching statewide Massachusetts general trails from OpenStreetMap...')
+    
+    places = ['Massachusetts, USA']
+    
+    tags = {
+        'highway': ['path','footway', 'track', 'bridleway'],
+        'route': ['hiking', 'foot'] 
+    }
+    
+    # Query OpenStreetsMap
+    gdf: gdp.GeoDataFrame = ox.features_from_place(places, tags=tags)
+    
+    # Keep strict line segments geometries 
+    gdf = gdf[gdf.geometry.type.isin(['LineString','MultiLineStrin'])]
+    
+    # Filter out sidewalks and crossings
+    if 'footway' in gdf.columns:
+        gdf = gdf[~gdf['footway'].isin(['sidewalk', 'crossing'])]
+    
+    # Filter out private access segments
+    if 'access' in gdf.columns:
+        gdf = gdf[~gdf['access'].isin(['private', 'no'])]
+    
+    # Filter out informal trails/paths
+    if 'informal' in gdf.columns:
+        gdf = gdf[~gdf['informal']!= 'yes']
+        
+    cols_to_keep = [
+        'name',
+        'highway',
+        'surface',
+        'sac_scale',        # Hiking difficulty scale
+        'trail_visibility', # Trail marking
+        'operator',         # Managing body (e.g., DCR, Trustees, local land trust)
+        'incline',
+        'geometry',
     ]
-
-    tags = {'highway': ['cycleway', 'path']}
-
-    # Query OpenStreetMaps
-    gdf = ox.features_from_place(places, tags=tags)
-
-    # Keep strictly line segement paths
-    gdf = gdf[gdf.geometry.type.isin(['LineString', 'MultiLineString'])]
-
-    # Filter to essential columns
-    cols_to_keep = ['name', 'surface', 'smoothness', 'geometry']
     existing_cols = [c for c in cols_to_keep if c in gdf.columns]
-    gdf = gdf[existing_cols]
-
-    # Reset multi-index for clean GeoJSON export
-    gdf = gdf.reset_index(drop=True)
-
-    # Save output
-    output_file = RAW_DIR / 'rail_trails.geojson'
+    gdf = gdf[existing_cols].reset_index(drop=True)
+    
+    # Export raw GeoJSON
+    output_file = RAW_DIR / 'mass_trails.geojson'
     gdf.to_file(output_file, driver='GeoJSON')
 
     size_mb = output_file.stat().st_size / (1024 * 1024)
-    logger.info(f'File saved. Saved {len(gdf)} segments to {output_file} {size_mb:.2f} MB.')
-
+    logger.info(f'Saved {len(gdf)} raw trail segments to {output_file} {size_mb} MB.')
+    
+    return output_file
 
 if __name__ == '__main__':
-    fetch_local_rail_trails()
+    fetch_mass_trails()
