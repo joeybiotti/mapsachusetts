@@ -1,20 +1,17 @@
 import duckdb
 import geopandas as gpd
 import pydeck as pdk
-import streamlit as st 
+import streamlit as st
 
-st.set_page_config(
-    page_title='Mapsachusetts Rail Trails',
-    page_icon='*',
-    layout='wide' 
-)
+st.set_page_config(page_title='Mapsachusetts Rail Trails', page_icon='*', layout='wide')
+
 
 @st.cache_data
 def load_trail_data():
     """Reads processed GeoParquet via DuckDB and converts to GeoDataFrame."""
-    conn =duckdb.connect()
+    conn = duckdb.connect()
     conn.execute('INSTALL spatial; LOAD spatial;')
-    
+
     query = """
         SELECT 
             trail_name,
@@ -27,16 +24,15 @@ def load_trail_data():
     """
     df = conn.execute(query).df()
     conn.close()
-    
-    gdf = gpd.GeoDataFrame(
-        df,geometry=gpd.GeoSeries.from_wkt(df['wkt_geom']), crs='EPSG:4326'
-    )
-    
+
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.GeoSeries.from_wkt(df['wkt_geom']), crs='EPSG:4326')
+
     return gdf
+
 
 gdf = load_trail_data()
 
-# Header 
+# Header
 st.title('Mapsachusetts Rail Trails Explorer')
 st.markdown('Exploring Mass Rail Trails and rail trails powered by DuckDB.')
 
