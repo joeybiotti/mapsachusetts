@@ -1,0 +1,17 @@
+# Set default behavior for text/binary line endings
+* text=auto eol=lf
+
+# Force GitHub Linguist to treat spatial SQL transformations as pure SQL
+scripts/sql/*.sql linguist-language=SQL
+sql/*.sql linguist-language=SQL
+
+# Ignore generated database/data files from repository language statistics
+*.db linguist-vendored
+*.duckdb linguist-vendored
+*.geojson linguist-vendored
+*.parquet linguist-vendored
+
+# Ensure binary database & data files are handled cleanly by Git
+*.db binary
+*.duckdb binary
+*.parquet binary

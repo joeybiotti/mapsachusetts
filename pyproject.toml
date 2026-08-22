@@ -25,3 +25,27 @@ ignore = []
 minversion = "6.0"
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.sqlfluff.core]
+dialect = "duckdb"
+templater = "raw"
+max_line_length = 100
+
+[tool.sqlfluff.indentation]
+tab_space_size = 4
+indent_unit = "space"
+
+[tool.sqlfluff.rules.capitalisation.keywords]
+capitalisation_policy = "upper"
+
+[tool.sqlfluff.rules.capitalisation.identifiers]
+capitalisation_policy = "lower"
+
+[tool.sqlfluff.rules.capitalisation.functions]
+capitalisation_policy = "upper"
+
+[tool.sqlfluff.rules.aliasing.table]
+aliasing_policy = "explicit"
+
+[tool.sqlfluff.rules.aliasing.column]
+aliasing_policy = "explicit"
