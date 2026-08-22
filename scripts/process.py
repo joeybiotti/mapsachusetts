@@ -10,7 +10,7 @@ logger = get_logger('process')
 PROJECT_ROOT = Path(__file__).parent.parent.resolve() if '__file__' in globals() else Path('.').resolve()
 RAW_DIR = PROJECT_ROOT / 'data' / 'raw'
 PROCESSED_DIR = PROJECT_ROOT / 'data' / 'processed'
-DB_PATH = PROJECT_ROOT / 'mapsachusetts.db'
+DB_PATH = PROJECT_ROOT / 'mapsachusetts.duckdb'
 
 
 def process_data():
