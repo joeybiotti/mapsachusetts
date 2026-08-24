@@ -35,9 +35,6 @@ format-sql:
 ingest:
 	python scripts/ingest.py
 
-process:
-	python scripts/process.py
-
 pipeline:
 	python main.py
 
