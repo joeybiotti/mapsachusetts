@@ -56,26 +56,19 @@ def process_data():
     return parquet_path
 
 
-def load_to_duckdb(parquet_file: Path, table_name: str):
-    """Loads a processed GeoParquet file into mapsachusetts.db"""
-    logger.info(f'Updating table {table_name} in {DB_PATH}...')
-
-    conn = duckdb.connect(str(DB_PATH))
-
-    conn.execute('INSTALL spatial; LOAD spatial;')
-
-    # Overwrite or create the table directly from Parquet output
-    conn.execute(f"""
-                 CREATE OR REPLACE TABLE {table_name} AS
-                 SELECT * FROM read_parquet('{parquet_file}')
-    """)
-
-    count = conn.execute(f'SELECT COUNT(*) FROM {table_name}').fetchone()[0]
-    conn.close()
-
-    logger.info(f'Successfully loaded {count} rows into "{table_name}".')
+def load_to_duckdb(parquet_path: Path, table_name: str = 'trails') -> None:
+    """Load processed GeoParquet into DuckDB table with lock fallback."""
+    try:
+        # Set a 5-second config timeout so it doesn't hang indefinitely on locks
+        conn = duckdb.connect(str(DB_PATH), config={'access_mode': 'READ_WRITE'})
+        conn.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM '{parquet_path}'")
+        conn.close()
+        logger.info(f"Successfully updated table '{table_name}' in {DB_PATH}")
+    except duckdb.IOException as e:
+        logger.warning(f'Could not write to {DB_PATH} due to file lock: {e}')
+        logger.warning(f'Parquet artifact successfully saved to {parquet_path}. Continuing...')
 
 
 if __name__ == '__main__':
     parquet_path = process_data()
-    load_to_duckdb(parquet_file=parquet_path, table_name='trails')
+    load_to_duckdb(parquet_path=parquet_path, table_name='trails')

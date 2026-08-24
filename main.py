@@ -23,7 +23,7 @@ def main():
 
     # Load GeoParquet data to DuckDB
     logger.info('Step 3 of 3: Running DuckDB processing...')
-    load_to_duckdb(parquet_file=parquet_path, table_name='trails')
+    load_to_duckdb(parquet_path=parquet_path, table_name='trails')
 
     # Calculate elapsed time
     elapsed_seconds = time.perf_counter() - start_time

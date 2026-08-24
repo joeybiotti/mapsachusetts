@@ -11,7 +11,7 @@ st.set_page_config(page_title='Mapsachusetts Trails', page_icon='🌲', layout='
 @st.cache_data
 def load_trail_data():
     """Reads processed GeoParquet via DuckDB, transforms EPSG, flips axis order, and loads GeoDataFrame."""
-    conn = duckdb.connect()
+    conn = duckdb.connect('mapsachusetts.duckdb', read_only=True)
     conn.execute('INSTALL spatial; LOAD spatial;')
 
     # ST_FlipCoordinates swaps (Lat, Lon) to standard GIS (Lon, Lat)
