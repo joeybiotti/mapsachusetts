@@ -24,7 +24,7 @@ lint:
 format:
 	ruff format .
 	ruff check --fix .
-	sqlfluff fix --force sql/
+	sqlfluff fix sql/
 
 lint-sql:
 	sqlfluff lint sql/

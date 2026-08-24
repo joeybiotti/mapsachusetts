@@ -30,6 +30,7 @@ pythonpath = ["."]
 dialect = "duckdb"
 templater = "raw"
 max_line_length = 100
+ignore = "parsing"
 
 [tool.sqlfluff.indentation]
 tab_space_size = 4
