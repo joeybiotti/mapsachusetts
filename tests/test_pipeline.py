@@ -3,7 +3,7 @@ from pathlib import Path
 import duckdb
 import pytest
 
-PROCESSED_PARQUET = Path('data/processed/rail_trails.parquet')
+PROCESSED_PARQUET = Path('data/processed/trails.parquet')
 
 
 @pytest.fixture(scope='module')
@@ -15,10 +15,10 @@ def db_connection():
     conn.close()
 
 
-def test_parquest_file_exists():
+def test_parquet_file_exists():
     """Verify that the DuckDB pipeline produces the expected output artifact."""
     assert PROCESSED_PARQUET.exists(), f'Parquet file missing at {PROCESSED_PARQUET}'
-    assert PROCESSED_PARQUET.stat().st_size > 0, 'Parquest file exists but is empty.'
+    assert PROCESSED_PARQUET.stat().st_size > 0, 'Parquet file exists but is empty.'
 
 
 def test_parquet_schema_and_columns(db_connection):
@@ -28,11 +28,10 @@ def test_parquet_schema_and_columns(db_connection):
     columns = schema['column_name'].tolist()
 
     expected_columns = [
-        'trail_name',
-        'surface_type',
-        'smoothness',
+        'name',
+        'surface',
         'length_meters',
-        'geom',
+        'geometry',
     ]
     for col in expected_columns:
         assert col in columns, f'Missing required column: {col}'
@@ -42,13 +41,13 @@ def test_no_null_trail_names_or_surfaces(db_connection):
     """Verify COALESCE logic worked and no NULL strings remain in core attributes."""
     query = f"""
         SELECT 
-            COUNT(*) - COUNT(trail_name) AS null_names,
-            COUNT(*) - COUNT(surface_type) AS null_surfaces
+            COUNT(*) - COUNT(name) AS null_names,
+            COUNT(*) - COUNT(surface) AS null_surfaces
         FROM '{PROCESSED_PARQUET}';
     """
     result = db_connection.execute(query).fetchone()
-    assert result[0] == 0, 'Found NULL trail_name values'
-    assert result[1] == 0, 'Found NULL surface_type values'
+    assert result[0] == 0, 'Found NULL name values'
+    assert result[1] == 0, 'Found NULL surface values'
 
 
 def test_valid_geometries_and_distances(db_connection):
